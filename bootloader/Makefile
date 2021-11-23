@@ -58,7 +58,7 @@ LOADLIBES	+= -lefi -lgnuefi
 LOADLIBES	+= $(LIBGCC)
 LOADLIBES	+= -T $(LDSCRIPT)
 
-TARGET_APPS = main.efi
+TARGET_APPS = ../../Build/BOOTX64.EFI
 TARGET_BSDRIVERS =
 TARGET_RTDRIVERS =
 
@@ -81,7 +81,7 @@ endif
 
 TARGETS = $(TARGET_APPS) $(TARGET_BSDRIVERS) $(TARGET_RTDRIVERS)
 
-CFLAGS += -Wno-error=unused-parameter -Wno-error=unused-variable
+CFLAGS += -Wno-error=unused-parameter -Wno-error=unused-variable -Wall -Werror
 
 all:	$(TARGETS)
 
