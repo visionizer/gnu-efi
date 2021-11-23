@@ -86,7 +86,7 @@ CFLAGS += -D__$(ARCH)__ -Wno-error=unused-parameter -Wno-error=unused-variable -
 all: $(TARGETS) post
 
 post:
-	cp $(SOURCE)/../$(ARCH)/bootloader/main.efi $(SOURCE)/../../../build/BOOTX64.EFI
+	cp $(SRCDIR)/../$(ARCH)/bootloader/main.efi $(SRCDIR)/../../../build/BOOTX64.EFI
 
 clean:
 	rm -f $(TARGETS) *~ *.o *.so

@@ -3,19 +3,27 @@
 #include <stdbool.h>
 #include <elf.h>
 
+
+// Helper Definitions
 #ifndef __x86_64__
 #define ELF_NATIVE_ARCH EM_X86_64
 #elif defined(__aarch64__)
 #define ELF_NATIVE_ARCH EM_AARCH64
 #else
-#error "No valid architecture defined"
+// TODO: #warning "No valid architecture defined. Defaulting to x86_64"
+#define ELF_NATIVE_ARCH EM_X86_64
 #endif
 
 
+// Globals
 EFI_SYSTEM_TABLE* TABLE;
 EFI_BOOT_SERVICES* BOOT_SERVICES;
 EFI_HANDLE HANDLE;
 
+// Types
+typedef unsigned long long size_t;
+
+// Helper Functions
 #define UNUSED(x) (void)x
 
 #define NOTICE L"NOTICE"
@@ -41,7 +49,11 @@ EFI_HANDLE HANDLE;
 		} \
 	} while (false)
 
-int memcmp(const void* ptra, const void* ptrb, size_t n)
+// Compare aptr with bptr.
+// Returns -1 if a byte of a is bigger than the same byte of b
+// Returns 1 if the opposite is true
+// Returns 0 if neither is true (a === b)
+int memcmp(const void* aptr, const void* bptr, size_t n)
 {
 	const unsigned char *a = aptr, *b = bptr;
 	for (size_t i = 0; i < n; i++) {
@@ -74,7 +86,7 @@ EFI_FILE* load_file(EFI_FILE* directory, CHAR16* path)
 
 	status = dir->Open(dir, &file, path, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY);
 	check_status(status, "open the kernel file", NULL);
-	check_status(EFI_NOT_FOUND, "check whether this works", NULL);
+
 	if (status != EFI_SUCCESS) {
 		return NULL;
 	}
@@ -116,6 +128,9 @@ EFI_STATUS efi_main (EFI_HANDLE handle, EFI_SYSTEM_TABLE* table)
 		EFI_FILE_INFO* info;
 		status = kernel->GetInfo(kernel, &gEfiFileInfoGuid, &size, NULL);
 		check_status(status, "get kernel info", EFI_NOT_FOUND);
+		BOOT_SERVICES->AllocatePool(EfiLoaderData, size, (void*)&info);
+		kernel->GetInfo(kernel, &gEfiFileInfoGuid, &size, (void**)&info);
+
 		UINTN headerSize = sizeof(header);
 		kernel->Read(kernel, &headerSize, &header);
 	}
@@ -127,7 +142,11 @@ EFI_STATUS efi_main (EFI_HANDLE handle, EFI_SYSTEM_TABLE* table)
 		header.e_ident[EI_DATA] != ELFDATA2LSB				||
 		header.e_type != ET_EXEC					||
 		header.e_machine != ELF_NATIVE_ARCH				||
+		header.e_version != EV_CURRENT
 	) {
+		log(ERROR, "The format of the kernel.elf (/esque) is bad.")
+	} else {
+		log(OK, "Verified format of /esque.")
 	}
 
 	return EFI_SUCCESS;
