@@ -81,7 +81,9 @@ endif
 
 TARGETS = $(TARGET_APPS) $(TARGET_BSDRIVERS) $(TARGET_RTDRIVERS)
 
+ADDIC ?=
 CFLAGS += -D__$(ARCH)__ -Wno-error=unused-parameter -Wno-error=unused-variable -Wall -Werror
+CFLAGS += $(ADDIC)
 
 all: $(TARGETS) post
 

@@ -31,6 +31,7 @@ typedef unsigned long long size_t;
 #define OK L"OK"
 #define ERROR L"ERROR"
 #define FATAL L"FATAL"
+#define INFO L"INFO"
 
 #define log(lvl, fmt, ...) Print(L"[ %s ] ::-> ", lvl); Print(L##fmt, ##__VA_ARGS__); \
 	Print(L"\r\n"); 
@@ -126,10 +127,10 @@ EFI_STATUS efi_main (EFI_HANDLE handle, EFI_SYSTEM_TABLE* table)
 
 		UINTN size;
 		EFI_FILE_INFO* info;
-		status = kernel->GetInfo(kernel, &gEfiFileInfoGuid, &size, NULL);
-		check_status(status, "get kernel info", EFI_NOT_FOUND);
+		status = kernel->GetInfo(kernel, &gEfiFileInfoGuid, &size, NULL);	
 		BOOT_SERVICES->AllocatePool(EfiLoaderData, size, (void*)&info);
 		kernel->GetInfo(kernel, &gEfiFileInfoGuid, &size, (void**)&info);
+		check_status(status, "get kernel info", EFI_NOT_FOUND);
 
 		UINTN headerSize = sizeof(header);
 		kernel->Read(kernel, &headerSize, &header);
@@ -148,6 +149,36 @@ EFI_STATUS efi_main (EFI_HANDLE handle, EFI_SYSTEM_TABLE* table)
 	} else {
 		log(OK, "Verified format of /esque.")
 	}
+
+	Elf64_Phdr* phdrs;
+	{
+		kernel->SetPosition(kernel, header.e_phoff);
+		UINTN size = header.e_phnum * header.e_phentsize;
+		BOOT_SERVICES->AllocatePool(EfiLoaderData, size, (void**)phdrs);
+		kernel->Read(kernel, &size, phdrs);
+	}
+
+	log(NOTICE, "Loading Kernel Program Headers. Dump incoming.")
+	for (
+		Elf64_Phdr* phdr = phdrs;
+		(char*)phdr < (char*)phdrs + header.e_phnum * header.e_phentsize;
+		phdr = (Elf64_Phdr*)((char*)phdr + header.e_phentsize)
+	) {
+		switch (phdr->p_type) {
+			case PT_LOAD:
+				int pages = (phdr->p_memsz - 0x1000 - 1) / 0x1000;
+				Elf64_Addr segment = phdr->p_paddr;
+				log(INFO, "\t>>Found PHDR of type PT_LOAD (0x%x pages at address 0x%x)", pages, segment);
+				BOOT_SERVICES->AllocatePages(AllocateAddress, EfiLoaderData, pages, (void*)&segment);
+
+				kernel->SetPosition(kernel, phdr->p_offset);
+				UINTN size = phdr->p_filesz;
+				kernel->Read(kernel, &size, (void**)segment);
+				break;
+		
+		}
+	}
+	log(OK, "Successfully loaded kernel program headers.");
 
 	return EFI_SUCCESS;
 }
