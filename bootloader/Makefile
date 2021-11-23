@@ -83,7 +83,10 @@ TARGETS = $(TARGET_APPS) $(TARGET_BSDRIVERS) $(TARGET_RTDRIVERS)
 
 CFLAGS += -Wno-error=unused-parameter -Wno-error=unused-variable -Wall -Werror
 
-all:	$(TARGETS)
+all: $(TARGETS) post
+
+post:
+	cp $(SOURCE)/../$(ARCH)/bootloader/main.efi $(SOURCE)/../../../build/BOOTX64.EFI
 
 clean:
 	rm -f $(TARGETS) *~ *.o *.so
