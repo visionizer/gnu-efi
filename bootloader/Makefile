@@ -85,10 +85,7 @@ ADDIC ?=
 CFLAGS += -D__$(ARCH)__ -Wno-error=unused-parameter -Wno-error=unused-variable -Wall -Werror
 CFLAGS += $(ADDIC)
 
-all: $(TARGETS) post
-
-post:
-	cp $(SRCDIR)/../$(ARCH)/bootloader/main.efi $(SRCDIR)/../../../build/BOOTX64.EFI
+all: $(TARGETS)
 
 clean:
 	rm -f $(TARGETS) *~ *.o *.so

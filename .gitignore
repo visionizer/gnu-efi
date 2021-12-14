@@ -1,0 +1,4 @@
+bootloader/*.c
+*.efi
+*.o
+*.a
